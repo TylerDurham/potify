@@ -1,25 +1,75 @@
-import typer
+import base64
+from io import BytesIO
 
-from spyotify.core import player
+import typer
+from PIL import Image
+from rich import box
+from rich.align import Align
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+
+from spyotify.core import image_cache, player
 
 app = typer.Typer()
+console = Console()
+
+
+def display_image_in_terminal(image_path):
+    # Open and convert the image to PNG format
+    with Image.open(image_path) as img:
+        buffered = BytesIO()
+        img.save(buffered, format="PNG")
+        img_bytes = buffered.getvalue()
+
+    # Encode the image in base64
+    img_base64 = base64.b64encode(img_bytes).decode("utf-8")
+
+    # Construct the escape sequence
+
+    print(
+        f"\033]1337;File=inline=1;width=auto;height=auto;preserveAspectRatio=1:{img_base64}\a"
+    )
 
 
 @app.command(name="now-playing")
 def now_playing():
     """Displays information about the current track playing."""
-    status, track = player.now_playing()
+    ok, track = player.now_playing()
 
-    if status:
+    if ok:
+        title = track["name"]
+        artists = ", ".join(a["name"] for a in track["artists"])
         album = track["album"]
+        album_name = album["name"]
 
         images = album["images"]
 
-        for image in images:
-            print(image)
+        image_cache.get_local_images(images)
+        p = images[0]["local-path"]
+        print(p)
+        # display_image_in_terminal(p)
+
+        # Show track info
+        table = Table.grid(expand=True)
+        table.add_column(justify="right")
+        table.add_column(justify="left")
+
+        table.add_row("🎵 Track:", f"[bold cyan]{title}[/bold cyan]")
+        table.add_row("🎤 Artist:", f"[bold magenta]{artists}[/bold magenta]")
+        table.add_row("💿 Album:", f"[green]{album_name}[/green]")
+        # table.add_row("⏱ Duration:", f"{track['progress']} / {track_info['duration']}")
+
+        panel = Panel(
+            Align.center(table),
+            box=box.ROUNDED,
+            title="🎧 Now Playing",
+            border_style="bright_blue",
+        )
+        console.print(panel)
+
     else:
         print("There was an issue getting the current track.")
-    # print(track)
 
 
 @app.command(name="next")

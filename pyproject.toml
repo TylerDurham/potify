@@ -8,14 +8,14 @@ dependencies = [
     "pillow>=11.2.1",
     "python-dotenv>=1.1.0",
     "requests>=2.32.3",
-    "rich-pixels>=3.0.1",
     "rich[image]>=14.0.0",
+    "rich-pixels>=3.0.1",
     "spotipy>=2.25.1",
     "typer>=0.16.0",
 ]
 
 [project.scripts]
-spyotify-cli = "potify.cli:main"
+spyotify-cli = "spyotify.cli:main"
 
 [build-system]
 requires = ["hatchling"]
